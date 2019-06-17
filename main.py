@@ -23,7 +23,7 @@ import torchvision.models as models
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('--data', metavar='DIR',
                     help='path to dataset')
-parser.add_argument('--arch', '-a', metavar='ARCH', default='vgg')
+parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet')
 parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 8)')
 parser.add_argument('--epochs', default=300, type=int, metavar='N',
@@ -51,7 +51,7 @@ parser.add_argument('--seed', default=None, type=int,
 parser.add_argument('--gpu', default=None, type=int,
                     help='GPU id to use.')
 
-parser.add_argument('--save-path', default='result/vgg_3', type=str, help='path to save the log and checkpoint')
+parser.add_argument('--save-path', default='result/resnet_3', type=str, help='path to save the log and checkpoint')
 
 best_prec1 = 0
 
@@ -89,7 +89,7 @@ def main():
 #        # model = models.__dict__[args.arch]()
 
 #    model = resnet.ResNet("ResNet18")
-    model = vgg.VGG('VGG16')
+    model = resnet.ResNet('ResNet18')
     log.info('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
 
     if args.gpu is not None:
@@ -165,9 +165,11 @@ def main():
     if args.evaluate:
         validate(val_loader, model, criterion, log)
         return
-
+    
+    epoch_count = 0
+    adjust_time = 0
     for epoch in range(args.start_epoch, args.epochs):
-        adjust_learning_rate(optimizer, epoch)
+#        adjust_learning_rate(optimizer, epoch)
 
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, log)
@@ -177,6 +179,14 @@ def main():
 
         # remember best prec@1 and save checkpoint
         is_best = prec1 > best_prec1
+        if is_best:
+            epoch_count = 0
+        else :
+            epoch_count +=1
+        if epoch_count > 9:
+            epoch_count = 0
+            adjust_time +=1
+            adjust_learning_rate(optimizer, epoch, adjust_time)
         best_prec1 = max(prec1, best_prec1)
         save_checkpoint({
             'epoch': epoch + 1,
@@ -305,17 +315,12 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def adjust_learning_rate(optimizer, epoch):
+def adjust_learning_rate(optimizer, epoch,adjust_time):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
     
 #    lr = args.lr * (0.1 ** (epoch // 30))
-    lr = args.lr
-    if epoch >= 90:
-        lr = args.lr*0.1
-    if epoch >= 175:
-        lr = args.lr*0.01
-    if epoch >= 225:
-        lr = args.lr*0.001
+    lr = args.lr * (0.1 ** adjust_time)
+    
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 

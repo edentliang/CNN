@@ -82,10 +82,10 @@ class ResNet(nn.Module):
         
         self.in_planes = 64
         
-        self.conv1 = nn.Conv2d(3, self.in_planes, kernel_size = 7, stride = 2,bias = False) #padding?
+        self.conv1 = nn.Conv2d(3, self.in_planes, kernel_size = 3, stride = 1,bias = False) #padding?
         self.bn1 = nn.BatchNorm2d(self.in_planes)
         self.relu = nn.ReLU(inplace = True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1) #padding?
+        #self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1) #padding?
         
         self.layer1 = self._make_layer(block, 64, num_blocks[0],stride = 1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1],stride = 2)
@@ -99,7 +99,7 @@ class ResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        #x = self.maxpool(x)
         
         x = self.layer1(x)
         x = self.layer2(x)
